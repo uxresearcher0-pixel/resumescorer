@@ -40,22 +40,22 @@ export default async function ReportPage({ params }: { params: { reportId: strin
 
   const jd = report.job_descriptions as any;
   const resume = report.resumes as any;
-  const overallColor = getScoreBadgeColor(report.overall_score) as "green" | "blue" | "yellow" | "red";
-  const missingKeywords = (report.missing_keywords as MissingKeyword[]) || [];
-  const matchedKeywords = (report.matched_keywords as string[]) || [];
-  const atsIssues = (report.ats_issues as ATSIssue[]) || [];
-  const strengths = (report.strengths as string[]) || [];
-  const weaknesses = (report.weaknesses as string[]) || [];
-  const bulletRewrites = (report.bullet_rewrites as BulletRewrite[]) || [];
+  const overallColor = getScoreBadgeColor(report.overall_score ?? 0) as "green" | "blue" | "yellow" | "red";
+  const missingKeywords = (report.missing_keywords as unknown as MissingKeyword[]) || [];
+  const matchedKeywords = (report.matched_keywords as unknown as string[]) || [];
+  const atsIssues = (report.ats_issues as unknown as ATSIssue[]) || [];
+  const strengths = (report.strengths as unknown as string[]) || [];
+  const weaknesses = (report.weaknesses as unknown as string[]) || [];
+  const bulletRewrites = (report.bullet_rewrites as unknown as BulletRewrite[]) || [];
 
   const categories: ScoreCategory[] = ["ats", "keyword", "skills", "experience", "impact", "formatting"];
   const categoryScores: Record<ScoreCategory, number> = {
-    ats: report.ats_score,
-    keyword: report.keyword_score,
-    skills: report.skills_score,
-    experience: report.experience_score,
-    impact: report.impact_score,
-    formatting: report.formatting_score,
+    ats: report.ats_score ?? 0,
+    keyword: report.keyword_score ?? 0,
+    skills: report.skills_score ?? 0,
+    experience: report.experience_score ?? 0,
+    impact: report.impact_score ?? 0,
+    formatting: report.formatting_score ?? 0,
   };
 
   return (
@@ -91,11 +91,11 @@ export default async function ReportPage({ params }: { params: { reportId: strin
           </div>
           <div className="mt-3">
             <Badge color={overallColor} className="px-4 py-1.5 text-sm font-semibold">
-              {getScoreLabel(report.overall_score)}
+              {getScoreLabel(report.overall_score ?? 0)}
             </Badge>
           </div>
           <p className="mt-4 mx-auto max-w-lg text-sm text-gray-500 dark:text-gray-400">
-            {getOverallInsight(report.overall_score, missingKeywords.length, atsIssues.length)}
+            {getOverallInsight(report.overall_score ?? 0, missingKeywords.length, atsIssues.length)}
           </p>
         </div>
       </Card>

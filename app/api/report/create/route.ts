@@ -164,13 +164,13 @@ async function runAnalysis(reportId: string, resume: any, jd: any) {
       formatting_score:    categoryScores.formatting,
       strengths:           aiResult.strengths,
       weaknesses:          aiResult.weaknesses,
-      ats_issues:          allAtsIssues,
+      ats_issues:          allAtsIssues as any,
       matched_keywords:    aiResult.keyword_match.matched,
-      missing_keywords:    aiResult.keyword_match.missing,
+      missing_keywords:    aiResult.keyword_match.missing as any,
       skills_matched:      aiResult.skills.matched,
       skills_missing:      aiResult.skills.missing,
-      bullet_rewrites:     aiResult.bullet_rewrites,
-      section_suggestions: aiResult.section_suggestions,
+      bullet_rewrites:     aiResult.bullet_rewrites as any,
+      section_suggestions: aiResult.section_suggestions as any,
       processing_time_ms:  Date.now() - start,
       ai_tokens_used:      null, // Gemini free tier doesn't expose token count
     })

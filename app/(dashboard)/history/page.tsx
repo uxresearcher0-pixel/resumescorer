@@ -22,7 +22,7 @@ export default async function HistoryPage() {
     company: (r.job_descriptions as any)?.company_name,
     score: r.overall_score || 0,
     status: r.status as "completed" | "processing" | "failed",
-    createdAt: r.created_at,
+    createdAt: r.created_at ?? "",
   }));
 
   return (

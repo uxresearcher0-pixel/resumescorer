@@ -100,7 +100,7 @@ export default async function DashboardPage() {
         />
         <QuickStatCard
           label="Scans Left"
-          value={profile ? `${profile.scans_limit - profile.scans_used}/${profile.scans_limit}` : "—"}
+          value={profile ? `${(profile.scans_limit ?? 0) - (profile.scans_used ?? 0)}/${profile.scans_limit ?? 0}` : "—"}
           subLabel={profile?.plan === "free" ? "Free plan — upgrade for unlimited" : "Pro plan"}
           icon={<Upload className="h-5 w-5" />}
           color="green"
