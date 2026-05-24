@@ -12,7 +12,7 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Fetch recent reports
-  const { data: reports } = await supabase
+  const { data: reportsRaw } = await supabase
     .from("reports")
     .select(`
       id, overall_score, status, created_at,
@@ -22,13 +22,21 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(10);
 
+  const reports = (reportsRaw || []) as Array<{
+    id: string;
+    overall_score: number;
+    status: string;
+    created_at: string;
+    job_descriptions: { job_title: string; company_name: string | null } | null;
+  }>;
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name, scans_used, scans_limit, plan")
     .eq("id", user?.id!)
     .single();
 
-  const completedReports = (reports || []).filter((r) => r.status === "completed");
+  const completedReports = reports.filter((r) => r.status === "completed");
   const avgScore =
     completedReports.length > 0
       ? Math.round(
@@ -40,7 +48,7 @@ export default async function DashboardPage() {
     ? Math.max(...completedReports.map((r) => r.overall_score || 0))
     : 0;
 
-  const scans = (reports || []).map((r) => ({
+  const scans = reports.map((r) => ({
     id: r.id,
     jobTitle: (r.job_descriptions as any)?.job_title || "Unknown Role",
     company: (r.job_descriptions as any)?.company_name,
