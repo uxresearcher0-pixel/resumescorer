@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Spinner } from "flowbite-react";
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
@@ -24,5 +24,13 @@ export default function AuthCallbackPage() {
       <Spinner size="xl" aria-label="Completing sign in" />
       <p className="text-gray-500 dark:text-gray-400">Completing sign in…</p>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Spinner size="xl" /></div>}>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }

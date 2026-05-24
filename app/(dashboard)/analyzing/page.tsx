@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { useReport } from "@/hooks/useReport";
 import { ANALYSIS_STEPS } from "@/lib/utils/constants";
 
-export default function AnalyzingPage() {
+function AnalyzingContent() {
   const params = useSearchParams();
   const reportId = params.get("reportId");
   const router = useRouter();
@@ -104,5 +104,13 @@ export default function AnalyzingPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AnalyzingPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>}>
+      <AnalyzingContent />
+    </Suspense>
   );
 }

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Card, Button, Alert } from "flowbite-react";
 import { ArrowRight, CheckCircle } from "lucide-react";
-import type { Metadata } from "next";
 import ResumeDropzone from "@/components/resume/ResumeDropzone";
 import { useAnalysisStore } from "@/store/analysisStore";
 import { useRouter } from "next/navigation";

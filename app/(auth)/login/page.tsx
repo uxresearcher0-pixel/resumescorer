@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Button, Label, TextInput, Alert, Card } from "flowbite-react";
+import { Suspense, useState } from "react";
+import { Button, Label, TextInput, Alert, Card, Spinner } from "flowbite-react";
 import { FileText, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const redirectTo = params.get("redirectTo") || "/dashboard";
@@ -130,5 +130,13 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Spinner size="lg" /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

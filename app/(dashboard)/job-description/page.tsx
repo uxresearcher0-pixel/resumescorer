@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Card, Button, Label, TextInput, Textarea, Select, Alert } from "flowbite-react";
+import { Suspense, useState } from "react";
+import { Card, Button, Label, TextInput, Textarea, Select, Alert, Spinner } from "flowbite-react";
 import { ArrowRight, AlertCircle, FileText } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ROLE_CATEGORIES } from "@/lib/utils/constants";
 
-export default function JobDescriptionPage() {
+function JobDescriptionForm() {
   const router = useRouter();
   const params = useSearchParams();
   const resumeId = params.get("resumeId");
@@ -160,5 +160,13 @@ export default function JobDescriptionPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function JobDescriptionPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center"><Spinner size="lg" /></div>}>
+      <JobDescriptionForm />
+    </Suspense>
   );
 }
