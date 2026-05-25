@@ -22,51 +22,73 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
     }
 
-    // Fetch the job page (with browser-like headers to avoid basic blocks)
-    let html = "";
+    // Strategy 1: Try Jina.ai reader — works on LinkedIn, Greenhouse, Lever, Workday, etc.
+    // Strategy 2: Fall back to direct HTML fetch for simpler sites
+    let pageText = "";
+
+    const jinaUrl = `https://r.jina.ai/${parsedUrl.toString()}`;
     try {
-      const pageRes = await fetch(parsedUrl.toString(), {
+      const jinaRes = await fetch(jinaUrl, {
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.5",
+          "Accept": "text/plain",
+          "X-Return-Format": "text",
         },
-        signal: AbortSignal.timeout(14000),
+        signal: AbortSignal.timeout(20000),
       });
 
-      if (!pageRes.ok) {
-        return NextResponse.json(
-          {
-            error: `Site returned error ${pageRes.status}. Copy the job description manually instead.`,
-          },
-          { status: 422 }
-        );
+      if (jinaRes.ok) {
+        const jinaText = await jinaRes.text();
+        if (jinaText && jinaText.length > 200) {
+          pageText = jinaText.slice(0, 10000);
+        }
       }
-      html = await pageRes.text();
-    } catch (fetchErr: any) {
-      if (fetchErr.name === "TimeoutError" || fetchErr.name === "AbortError") {
-        return NextResponse.json(
-          { error: "Request timed out. The site may be blocking automated access. Copy manually instead." },
-          { status: 422 }
-        );
-      }
-      throw fetchErr;
+    } catch {
+      // Jina failed — will try direct fetch below
     }
 
-    // Strip HTML → readable text
-    const pageText = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
-      .replace(/<!--[\s\S]*?-->/g, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s{3,}/g, "\n\n")
-      .trim()
-      .slice(0, 9000); // cap to avoid Gemini token limits
+    // Fall back to direct fetch if Jina didn't return useful content
+    if (!pageText) {
+      try {
+        const pageRes = await fetch(parsedUrl.toString(), {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+          },
+          signal: AbortSignal.timeout(14000),
+        });
+
+        if (!pageRes.ok) {
+          return NextResponse.json(
+            { error: `Could not access this job posting (site returned ${pageRes.status}). Copy the job description manually instead.` },
+            { status: 422 }
+          );
+        }
+
+        const html = await pageRes.text();
+        pageText = html
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+          .replace(/<!--[\s\S]*?-->/g, " ")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s{3,}/g, "\n\n")
+          .trim()
+          .slice(0, 9000);
+      } catch (fetchErr: any) {
+        if (fetchErr.name === "TimeoutError" || fetchErr.name === "AbortError") {
+          return NextResponse.json(
+            { error: "Request timed out. Copy the job description manually instead." },
+            { status: 422 }
+          );
+        }
+        throw fetchErr;
+      }
+    }
 
     if (pageText.length < 100) {
       return NextResponse.json(
-        { error: "Could not read page content. This site may require JavaScript (e.g. LinkedIn). Copy manually instead." },
+        { error: "Could not read enough content from this page. Copy the job description manually instead." },
         { status: 422 }
       );
     }
