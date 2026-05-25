@@ -13,27 +13,6 @@ export interface ParsedResume {
   };
 }
 
-export async function extractResumeText(
-  fileUrl: string,
-  fileType: string
-): Promise<ParsedResume> {
-  const parserUrl = process.env.PYTHON_PARSER_URL || "http://localhost:8000";
-
-  const response = await fetch(`${parserUrl}/parse`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ file_url: fileUrl, file_type: fileType }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Parser service error: ${error}`);
-  }
-
-  const data = await response.json();
-  return data as ParsedResume;
-}
-
 export function countWords(text: string): number {
   return text
     .trim()
