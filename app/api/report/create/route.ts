@@ -88,22 +88,18 @@ async function runAnalysis(reportId: string, resume: any, jd: any) {
   const start = Date.now();
   const adminSupabase = await createAdminClient();
 
-  // Wait for text extraction if not ready yet (poll up to 20s)
+  // Text is extracted synchronously during upload — should always be present
   let extractedText = resume.extracted_text || "";
   if (!extractedText) {
-    for (let i = 0; i < 20; i++) {
-      await new Promise((r) => setTimeout(r, 1000));
-      const { data } = await adminSupabase
-        .from("resumes")
-        .select("extracted_text")
-        .eq("id", resume.id)
-        .single();
-      if (data?.extracted_text) {
-        extractedText = data.extracted_text;
-        break;
-      }
-    }
-    if (!extractedText) throw new Error("Resume text extraction timed out after 20s");
+    // Fallback: try once more in case of rare race condition
+    await new Promise((r) => setTimeout(r, 3000));
+    const { data } = await adminSupabase
+      .from("resumes")
+      .select("extracted_text")
+      .eq("id", resume.id)
+      .single();
+    extractedText = data?.extracted_text || "";
+    if (!extractedText) throw new Error("Resume text could not be extracted. Please try uploading again.");
   }
 
   // ── Gemini API call ──────────────────────────────────────────

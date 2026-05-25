@@ -9,7 +9,6 @@ export function getGeminiClient(): GoogleGenerativeAI {
   return client;
 }
 
-// gemini-1.5-flash = FREE tier (15 req/min, 1500 req/day)
-// gemini-1.5-pro   = paid, higher quality
+// gemini-1.5-flash-8b = FREE tier (most generous: 15 req/min, 1500 req/day)
 export const DEFAULT_MODEL =
-  process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  process.env.GEMINI_MODEL || "gemini-1.5-flash-8b";
