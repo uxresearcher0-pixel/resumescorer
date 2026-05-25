@@ -151,8 +151,8 @@ async function runAnalysis(reportId: string, resume: any, jd: any) {
   const overallScore = calculateOverallScore(categoryScores);
 
   // ── Write completed report ────────────────────────────────────
-  await adminSupabase
-    .from("reports")
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminSupabase.from("reports") as any)
     .update({
       status:              "completed",
       overall_score:       overallScore,
@@ -171,6 +171,9 @@ async function runAnalysis(reportId: string, resume: any, jd: any) {
       skills_missing:      aiResult.skills.missing,
       bullet_rewrites:     aiResult.bullet_rewrites as any,
       section_suggestions: aiResult.section_suggestions as any,
+      failure_reasons:     aiResult.failure_reasons as any,
+      gap_analysis:        aiResult.gap_analysis as any,
+      improvement_roadmap: aiResult.improvement_roadmap as any,
       processing_time_ms:  Date.now() - start,
       ai_tokens_used:      null, // Gemini free tier doesn't expose token count
     })

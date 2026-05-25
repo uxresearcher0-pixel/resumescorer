@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Card, Badge, Button, Alert } from "flowbite-react";
-import { Download, RefreshCw, TrendingUp, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import {
+  Download, TrendingUp, AlertTriangle, CheckCircle, XCircle,
+  Target, Map, ChevronRight
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import ScoreCard from "@/components/ui/ScoreCard";
 import KeywordBadge from "@/components/ui/KeywordBadge";
 import { CATEGORY_LABELS, CATEGORY_DESCRIPTIONS, type ScoreCategory } from "@/lib/scoring/weights";
 import { getScoreBadgeColor, getScoreLabel } from "@/lib/scoring/engine";
-import type { Report, MissingKeyword, ATSIssue, BulletRewrite } from "@/types/report";
+import type { MissingKeyword, ATSIssue, BulletRewrite, FailureReason, GapAnalysis, RoadmapWeek } from "@/types/report";
 
 export const metadata: Metadata = { title: "Resume Score Report" };
 
@@ -47,6 +50,10 @@ export default async function ReportPage({ params }: { params: { reportId: strin
   const strengths = (report.strengths as unknown as string[]) || [];
   const weaknesses = (report.weaknesses as unknown as string[]) || [];
   const bulletRewrites = (report.bullet_rewrites as unknown as BulletRewrite[]) || [];
+  const reportAny = report as any;
+  const failureReasons = (reportAny.failure_reasons as unknown as FailureReason[]) || [];
+  const gapAnalysis = (reportAny.gap_analysis as unknown as GapAnalysis) || null;
+  const improvementRoadmap = (reportAny.improvement_roadmap as unknown as RoadmapWeek[]) || [];
 
   const categories: ScoreCategory[] = ["ats", "keyword", "skills", "experience", "impact", "formatting"];
   const categoryScores: Record<ScoreCategory, number> = {
@@ -57,6 +64,9 @@ export default async function ReportPage({ params }: { params: { reportId: strin
     impact: report.impact_score ?? 0,
     formatting: report.formatting_score ?? 0,
   };
+
+  const impactColor = (impact: string) =>
+    impact === "high" ? "red" : impact === "medium" ? "yellow" : "gray";
 
   return (
     <div className="mx-auto max-w-4xl animate-fade-in space-y-8">
@@ -115,13 +125,68 @@ export default async function ReportPage({ params }: { params: { reportId: strin
         </div>
       </div>
 
+      {/* WHY YOU DIDN'T PASS */}
+      {failureReasons.length > 0 && (
+        <Card>
+          <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+            <Target className="h-5 w-5 text-red-500" aria-hidden="true" />
+            Why You Didn&apos;t Pass
+          </h2>
+          <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
+            Ranked by impact — fix these first to improve your score the most.
+          </p>
+          <div className="space-y-3">
+            {failureReasons.map((fr, i) => (
+              <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-bold text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                    {fr.rank}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <Badge color={impactColor(fr.impact)} className="capitalize text-xs">{fr.impact} impact</Badge>
+                      <Badge color="gray" className="capitalize text-xs">{fr.category}</Badge>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{fr.reason}</p>
+                    <div className="mt-2 flex items-start gap-1.5">
+                      <ChevronRight className="h-4 w-4 flex-shrink-0 text-green-500 mt-0.5" />
+                      <p className="text-sm text-green-700 dark:text-green-400">{fr.fix}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* GAP ANALYSIS */}
+      {gapAnalysis && gapAnalysis.overall && (
+        <Card>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Gap Analysis</h2>
+          <div className="space-y-4">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/10">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-200">Overall Verdict</p>
+              <p className="mt-1 text-sm text-blue-800 dark:text-blue-300">{gapAnalysis.overall}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(["keyword", "skills", "experience", "impact"] as const).filter((k) => gapAnalysis[k]).map((key) => (
+                <div key={key} className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 capitalize">{key}</p>
+                  <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">{gapAnalysis[key]}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Keywords */}
       <Card>
         <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Keyword Analysis</h2>
         <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
           {matchedKeywords.length} matched · {missingKeywords.length} missing
         </p>
-
         {missingKeywords.length > 0 && (
           <div className="mb-5">
             <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -137,7 +202,6 @@ export default async function ReportPage({ params }: { params: { reportId: strin
             </div>
           </div>
         )}
-
         {matchedKeywords.length > 0 && (
           <div>
             <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Matched keywords</p>
@@ -202,10 +266,7 @@ export default async function ReportPage({ params }: { params: { reportId: strin
                     : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
                 }`}
               >
-                <Badge
-                  color={issue.severity === "high" ? "red" : issue.severity === "medium" ? "yellow" : "gray"}
-                  className="flex-shrink-0 capitalize"
-                >
+                <Badge color={issue.severity === "high" ? "red" : issue.severity === "medium" ? "yellow" : "gray"} className="flex-shrink-0 capitalize">
                   {issue.severity}
                 </Badge>
                 <div>
@@ -240,6 +301,51 @@ export default async function ReportPage({ params }: { params: { reportId: strin
           </div>
         </Card>
       )}
+
+      {/* IMPROVEMENT ROADMAP */}
+      {improvementRoadmap.length > 0 && (
+        <Card>
+          <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+            <Map className="h-5 w-5 text-blue-500" aria-hidden="true" />
+            Your Improvement Roadmap
+          </h2>
+          <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
+            Follow this week-by-week plan to significantly boost your score.
+          </p>
+          <div className="space-y-4">
+            {improvementRoadmap.map((week, idx) => (
+              <div key={week.week} className="relative flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                    W{week.week}
+                  </div>
+                  {idx < improvementRoadmap.length - 1 && (
+                    <div className="mt-1 w-0.5 flex-1 bg-blue-200 dark:bg-blue-800" style={{ minHeight: "1rem" }} />
+                  )}
+                </div>
+                <div className="pb-4 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <p className="font-semibold text-gray-900 dark:text-white">{week.focus}</p>
+                    {week.score_impact && (
+                      <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        {week.score_impact}
+                      </span>
+                    )}
+                  </div>
+                  <ul className="space-y-1.5">
+                    {week.actions.map((action, j) => (
+                      <li key={j} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <ChevronRight className="h-4 w-4 flex-shrink-0 text-blue-400 mt-0.5" />
+                        {action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
@@ -257,5 +363,5 @@ function getOverallInsight(score: number, missingCount: number, atsCount: number
     if (atsCount > 0) parts.push(`${atsCount} ATS issue${atsCount > 1 ? "s" : ""}`);
     return `Fair match. Address ${parts.join(" and ")} to strengthen your application.`;
   }
-  return "Your resume needs significant optimization for this role. Review the keyword gaps and ATS issues below.";
+  return "Your resume needs significant optimization for this role. Review the failure reasons and roadmap below.";
 }

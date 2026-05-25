@@ -10,7 +10,28 @@ export function parseAnalysisResponse(raw: string): AIAnalysisResult {
       .trim();
 
     const parsed = JSON.parse(cleaned);
-    return parsed as AIAnalysisResult;
+
+    // Ensure new fields have safe fallbacks if Gemini omits them
+    return {
+      keyword_match: parsed.keyword_match ?? { matched: [], missing: [] },
+      skills: parsed.skills ?? { matched: [], missing: [] },
+      ats_issues: parsed.ats_issues ?? [],
+      strengths: parsed.strengths ?? [],
+      weaknesses: parsed.weaknesses ?? [],
+      experience_relevance_notes: parsed.experience_relevance_notes ?? "",
+      bullet_rewrites: parsed.bullet_rewrites ?? [],
+      section_suggestions: parsed.section_suggestions ?? [],
+      scores: parsed.scores ?? { keyword: 0, skills: 0, experience: 0, impact: 0 },
+      failure_reasons: parsed.failure_reasons ?? [],
+      gap_analysis: parsed.gap_analysis ?? {
+        keyword: "",
+        skills: "",
+        experience: "",
+        impact: "",
+        overall: "",
+      },
+      improvement_roadmap: parsed.improvement_roadmap ?? [],
+    } as AIAnalysisResult;
   } catch (error) {
     console.error("Failed to parse Gemini response:", error, "\nRaw:", raw);
     return {
@@ -23,6 +44,9 @@ export function parseAnalysisResponse(raw: string): AIAnalysisResult {
       bullet_rewrites: [],
       section_suggestions: [],
       scores: { keyword: 0, skills: 0, experience: 0, impact: 0 },
+      failure_reasons: [],
+      gap_analysis: { keyword: "", skills: "", experience: "", impact: "", overall: "" },
+      improvement_roadmap: [],
     };
   }
 }

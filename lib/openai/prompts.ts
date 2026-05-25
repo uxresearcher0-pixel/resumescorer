@@ -44,16 +44,54 @@ Analyze the resume against the job description and return ONLY a valid JSON obje
     "skills": 0,
     "experience": 0,
     "impact": 0
-  }
+  },
+  "failure_reasons": [
+    {
+      "rank": 1,
+      "reason": "string (specific reason why this resume would be rejected — e.g. 'Missing 3 required technical skills: Kubernetes, Terraform, AWS Lambda')",
+      "category": "keywords|skills|experience|formatting|ats|impact",
+      "impact": "high|medium|low",
+      "fix": "string (concrete, specific action to fix this — e.g. 'Add a Projects section showing Kubernetes deployment experience')"
+    }
+  ],
+  "gap_analysis": {
+    "keyword": "string (1-2 sentences explaining exactly why the keyword score is low — be specific about which required keywords are missing)",
+    "skills": "string (1-2 sentences on skill gaps — name the missing skills explicitly)",
+    "experience": "string (1-2 sentences on experience relevance gap — years, job title mismatch, missing domain experience)",
+    "impact": "string (1-2 sentences on weak impact — lack of metrics, passive verbs, missing quantification)",
+    "overall": "string (2-3 sentence overall verdict — would a recruiter shortlist this resume? Why or why not?)"
+  },
+  "improvement_roadmap": [
+    {
+      "week": 1,
+      "focus": "string (e.g. 'Add missing keywords and skills')",
+      "actions": ["string (specific action)"],
+      "score_impact": "string (e.g. 'Keyword score: +15 pts, Overall: +8 pts')"
+    },
+    {
+      "week": 2,
+      "focus": "string",
+      "actions": ["string"],
+      "score_impact": "string"
+    },
+    {
+      "week": 3,
+      "focus": "string",
+      "actions": ["string"],
+      "score_impact": "string"
+    }
+  ]
 }
 
 Rules:
 - bullet_rewrites: max 5 bullets, pick the weakest ones
+- failure_reasons: max 5, ranked 1 (most damaging) to 5 (least damaging). Be brutally honest and specific — vague reasons like "improve your resume" are useless
+- gap_analysis: each field must reference specific missing items from the job description — do not be generic
+- improvement_roadmap: must be realistic and ordered by impact. Week 1 = highest-ROI changes
 - keyword score: 0-100 based on how many required/preferred keywords appear
 - skills score: 0-100 based on skill coverage
 - experience score: 0-100 based on relevance of job titles, years, and responsibilities
 - impact score: 0-100 based on use of metrics, numbers, and strong action verbs
-- Be specific and actionable in suggestions
 - Return ONLY the JSON`;
 }
 

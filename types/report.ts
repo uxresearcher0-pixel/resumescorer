@@ -23,6 +23,29 @@ export interface SectionSuggestion {
   priority?: "high" | "medium" | "low";
 }
 
+export interface FailureReason {
+  rank: number;
+  reason: string;
+  category: "keywords" | "skills" | "experience" | "formatting" | "ats" | "impact";
+  impact: "high" | "medium" | "low";
+  fix: string;
+}
+
+export interface GapAnalysis {
+  keyword: string;
+  skills: string;
+  experience: string;
+  impact: string;
+  overall: string;
+}
+
+export interface RoadmapWeek {
+  week: number;
+  focus: string;
+  actions: string[];
+  score_impact: string;
+}
+
 export interface AIAnalysisResult {
   keyword_match: {
     matched: string[];
@@ -44,6 +67,9 @@ export interface AIAnalysisResult {
     experience: number;
     impact: number;
   };
+  failure_reasons: FailureReason[];
+  gap_analysis: GapAnalysis;
+  improvement_roadmap: RoadmapWeek[];
 }
 
 export interface Report {
@@ -67,6 +93,9 @@ export interface Report {
   skills_missing: string[];
   bullet_rewrites: BulletRewrite[];
   section_suggestions: SectionSuggestion[];
+  failure_reasons: FailureReason[];
+  gap_analysis: GapAnalysis | null;
+  improvement_roadmap: RoadmapWeek[];
   status: "pending" | "processing" | "completed" | "failed";
   error_message?: string;
   created_at: string;
